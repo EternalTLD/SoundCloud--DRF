@@ -22,7 +22,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     # Internal Apps
-    'oauth',
+    'src.oauth',
+    'src.audio_library',
 
 ]
 
@@ -101,3 +102,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 PROFILE_IMAGE_SIZE_MB_LIMIT = 2
+
+ALGORITHM = 'HS256'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ('src.oauth.services.auth_backend.AuthBackend',),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny'
+    ]
+}
+
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    }
+}
