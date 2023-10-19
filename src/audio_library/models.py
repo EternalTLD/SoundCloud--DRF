@@ -147,3 +147,6 @@ class Playlist(models.Model):
             validate_image_size
         ]
     )
+
+    def __str__(self) -> str:
+        return f'Playlist - {self.title}'
