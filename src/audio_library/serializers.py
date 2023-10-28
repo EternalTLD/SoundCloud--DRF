@@ -16,23 +16,42 @@ class LicenseSerializer(serializers.ModelSerializer):
         fields = ('id', 'text')
 
 
-class AudioSerializer(serializers.ModelSerializer):
-    licenses = LicenseSerializer(many=True)
-    genres = GenreSerializer(many=True)
-
-    class Meta:
-        model = models.Audio
-        fields = ('user', 'title', 'album', 'genres', 'file', 'release_date', 'licenses', 'plays_count', 'downloads')
-
-
 class AlbumSerializer(serializers.ModelSerializer):
-    audios = AudioSerializer(many=True)
     genres = GenreSerializer(many=True)
 
     class Meta:
         models = models.Album
-        fields = ('user', 'title', 'audios', 'descriprion', 'genres', 'release_date', 'private', 'cover')
+        fields = ('user', 'title', 'descriprion', 'genres', 'release_date', 'private', 'cover')
 
     def update(self, instance, validated_data):
         delete_old_file(instance.cover.path)
         return super().update(instance, validated_data)
+
+
+class CreateAudioSerializer(serializers.BaseSerializer):
+    plays_count = serializers.IntegerField(read_only=True)
+    downloads = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = models.Audio
+        fields = (
+            'user', 
+            'title', 
+            'album', 
+            'genre', 
+            'file', 
+            'release_date', 
+            'license', 
+            'plays_count', 
+            'downloads'
+        )
+
+    def update(self, instance, validated_data):
+        delete_old_file(instance.file.path)
+        return super().update(instance, validated_data)
+
+
+class AudioSerializer(CreateAudioSerializer):
+    license = LicenseSerializer(many=True)
+    genre = GenreSerializer(many=True)
+    album = AlbumSerializer()
