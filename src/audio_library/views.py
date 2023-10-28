@@ -67,3 +67,23 @@ class AudioView(MixedSerializer, viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         delete_old_file(instance.file.path)
         instance.delete()
+
+
+class PlaylistView(MixedSerializer, viewsets.ModelViewSet):
+    """CRUD playlist"""
+    serializer_class = serializers.CreateAudioSerializer
+    parser_classes = (parsers.MultiPartParser,)
+    permission_classes = [IsAuthor]
+    serializer_classes_by_action = {
+        'list': serializers.PlaylistSerializer
+    }
+
+    def get_queryset(self):
+        return self.request.user.playlists.all()
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        delete_old_file(instance.cover.path)
+        instance.delete()

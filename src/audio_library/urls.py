@@ -21,5 +21,9 @@ urlpatterns = [
     path('author_album/<int:pk>/', views.PublicAlbumListView.as_view()),
 
     path('audio/', views.AudioView.as_view({'get': 'list', 'post': 'create'})),
-    path('audio/<int:pk>/', views.AudioView.as_view({'put': 'update', 'delete': 'destroy'}))
+    path('audio/<int:pk>/', views.AudioView.as_view({'put': 'update', 'delete': 'destroy'})),
+
+    path('playlist/', views.PlaylistView.as_view({'get': 'list', 'post': 'create'})),
+    path('playlist/<int:pk>/', views.PlaylistView.as_view({'put': 'update', 'delete': 'destroy'})),
+    
 ]

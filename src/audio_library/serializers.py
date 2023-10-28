@@ -55,3 +55,18 @@ class AudioSerializer(CreateAudioSerializer):
     license = LicenseSerializer(many=True)
     genre = GenreSerializer(many=True)
     album = AlbumSerializer()
+
+
+class CreatePlaylistSerializer(serializers.BaseSerializer):
+    class Meta:
+        model = models.Playlist
+        fields = ('title', 'user', 'audios', 'cover')
+    
+    def update(self, instance, validated_data):
+        delete_old_file(instance.cover.path)
+        return super().update(instance, validated_data)
+    
+
+class PlaylistSerializer(CreatePlaylistSerializer):
+    audios = AudioSerializer(many=True, read_only=True)
+    
