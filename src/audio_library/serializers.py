@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from . import models
+from ..base.services import delete_old_file
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -32,16 +33,6 @@ class AlbumSerializer(serializers.ModelSerializer):
         models = models.Album
         fields = ('user', 'title', 'audios', 'descriprion', 'genres', 'release_date', 'private', 'cover')
 
-
-# class CommentSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         models = models.Comment
-#         fields = ('user', 'text', 'audio', 'timestamp')
-
-
-class PlaylistSerializer(serializers.ModelSerializer):
-    audios = AudioSerializer(many=True)
-    
-    class Meta:
-        model = models.Playlist
-        fields = ('user', 'title', 'audios', 'cover')
+    def update(self, instance, validated_data):
+        delete_old_file(instance.cover.path)
+        return super().update(instance, validated_data)
