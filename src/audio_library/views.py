@@ -3,7 +3,7 @@ from rest_framework import generics, viewsets, parsers
 from . import models, serializers
 from ..base.permissions import IsAuthor
 from ..base.services import delete_old_file
-from ..base.classes import MixedSerializer
+from ..base.classes import MixedSerializer, Pagination
 
 
 class GenreListView(generics.ListAPIView):
@@ -67,6 +67,22 @@ class AudioView(MixedSerializer, viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         delete_old_file(instance.file.path)
         instance.delete()
+
+
+class AuthorAudioView(generics.ListAPIView):
+    """Author audio list"""
+    serializer_class = serializers.AudioSerializer
+    pagination_class = Pagination
+
+    def get_queryset(self):
+        return models.Audio.objects.filter(user__id=self.kwargs.get('pk'))
+
+
+class AllAudioView(generics.ListAPIView):
+    """All audio list"""
+    queryset = models.Audio.objects.all()
+    serializer_class = serializers.AudioSerializer
+    pagination_class = Pagination
 
 
 class PlaylistView(MixedSerializer, viewsets.ModelViewSet):
