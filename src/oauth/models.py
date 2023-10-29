@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 
-from base.services import get_path_upload_profile_image, validate_image_size
+from src.base.services import get_upload_profile_image_path, validate_image_size
 
 
 class AuthUser(models.Model):
@@ -12,7 +12,7 @@ class AuthUser(models.Model):
     country = models.CharField(max_length=30, blank=True, null=True)
     city = models.CharField(max_length=30, blank=True, null=True)
     profile_image = models.ImageField(
-        upload_to=get_path_upload_profile_image, 
+        upload_to=get_upload_profile_image_path,
         blank=True, 
         null=True, 
         validators=[
@@ -31,8 +31,16 @@ class AuthUser(models.Model):
 
 class Follower(models.Model):
     """Follower model"""
-    user = models.ForeignKey(AuthUser, on_delete=models.CASCADE, related_name='owner')
-    subscriber = models.ForeignKey(AuthUser, on_delete=models.CASCADE, related_name='subscribers')
+    user = models.ForeignKey(
+        AuthUser, 
+        on_delete=models.CASCADE, 
+        related_name='owner'
+    )
+    subscriber = models.ForeignKey(
+        AuthUser, 
+        on_delete=models.CASCADE, 
+        related_name='subscribers'
+    )
 
     def __str__(self) -> str:
         return f"{self.user} is subscribed to {self.subscriber}"
@@ -40,7 +48,11 @@ class Follower(models.Model):
 
 class SocialLink(models.Model):
     """User social links model"""
-    user = models.ForeignKey(AuthUser, on_delete=models.CASCADE, related_name='social_links')
+    user = models.ForeignKey(
+        AuthUser, 
+        on_delete=models.CASCADE, 
+        related_name='social_links'
+    )
     link = models.URLField(max_length=100)
 
     def __str__(self) -> str:
