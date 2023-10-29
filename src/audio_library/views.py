@@ -1,4 +1,7 @@
-from rest_framework import generics, viewsets, parsers
+import os
+from django.http import FileResponse, Http404
+from rest_framework import generics, viewsets, parsers, views
+from django.shortcuts import get_object_or_404
 
 from . import models, serializers
 from ..base.permissions import IsAuthor
@@ -83,6 +86,34 @@ class AllAudioView(generics.ListAPIView):
     queryset = models.Audio.objects.all()
     serializer_class = serializers.AudioSerializer
     pagination_class = Pagination
+
+
+class StreamAudioView(views.APIView):
+    """Listen audio view"""
+
+    def get(self, request, pk):
+        audio = get_object_or_404(models.Audio, id=pk)
+        if os.path.exists(audio.file.path):
+            audio.plays_count += 1
+            audio.save()
+            return FileResponse(open(audio.file.path, 'rb'), filename=audio.file.name)
+        else:
+            return Http404()
+        
+
+class DownloadAudioView(views.APIView):
+    """Download audio view"""
+    
+    def get(self, request, pk):
+        audio = get_object_or_404(models.Audio, id=pk)
+        if os.path.exists(audio.file.path):
+            audio.downloads += 1
+            audio.save()
+            return FileResponse(
+                open(audio.file.path, 'rb'), filename=audio.file.name, as_attachment=True
+            )
+        else:
+            return Http404()
 
 
 class PlaylistView(MixedSerializer, viewsets.ModelViewSet):

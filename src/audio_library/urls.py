@@ -11,10 +11,6 @@ urlpatterns = [
     path('license/', views.LicenseView.as_view({'get': 'list', 'post': 'create'})),
     path('license/<int:pk>/', views.LicenseView.as_view({'put': 'update', 'delete': 'destroy'})),
 
-    path('audio/', views.AllAudioListView.as_view()),
-    path('my_audio/', views.AudioView.as_view({'get': 'list', 'post': 'create'})),
-    path('my_audio/<int:pk>/', views.AudioView.as_view({'put': 'update', 'delete': 'destroy'})),
-
     path('album/', views.AlbumView.as_view({'get': 'list', 'post': 'create'})),
     path('album/<int:pk>/', views.AlbumView.as_view({'put': 'update', 'delete': 'destroy'})),
 
@@ -22,6 +18,9 @@ urlpatterns = [
 
     path('audio/', views.AudioView.as_view({'get': 'list', 'post': 'create'})),
     path('audio/<int:pk>/', views.AudioView.as_view({'put': 'update', 'delete': 'destroy'})),
+
+    path('stream_audio/<int:pk>/', views.StreamAudioView.as_view()),
+    path('download_audio/<int:pk>/', views.DownloadAudioView.as_view()),
 
     path('audio_list/', views.AllAudioView.as_view()),
     path('author_audio_list/<int:pk>/', views.AuthorAudioView.as_view()),
