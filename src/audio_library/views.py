@@ -22,6 +22,7 @@ class LicenseView(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.request.user.licenses.all()
+        # return models.License.objects.filter(user=self.request.user)
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

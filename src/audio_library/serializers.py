@@ -20,8 +20,8 @@ class AlbumSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True)
 
     class Meta:
-        models = models.Album
-        fields = ('user', 'title', 'descriprion', 'genres', 'release_date', 'private', 'cover')
+        model = models.Album
+        fields = ('user', 'title', 'description', 'genres', 'release_date', 'private', 'cover')
 
     def update(self, instance, validated_data):
         delete_old_file(instance.cover.path)

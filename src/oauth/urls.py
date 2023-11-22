@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 
 from .endpoint import views, auth_views
 
@@ -19,6 +19,6 @@ urlpatterns = [
     )),
 
     path('me/', views.UserView.as_view({'get': 'retrieve', 'put': 'update'})),
-    path('google/', auth_views.google_login_view)
+    path('google/', auth_views.google_login_view),
 ]
 
