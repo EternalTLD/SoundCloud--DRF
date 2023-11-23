@@ -1,7 +1,7 @@
 import os
 from django.http import FileResponse, Http404
 from rest_framework import generics, viewsets, parsers, views
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 
 from . import models, serializers
 from ..base.permissions import IsAuthor
@@ -35,7 +35,7 @@ class AlbumView(viewsets.ModelViewSet):
     permission_classes = [IsAuthor]
 
     def get_queryset(self):
-        return self.request.user.albums.all()
+        return models.Album.objects.all()
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -135,3 +135,7 @@ class PlaylistView(MixedSerializer, viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         delete_old_file(instance.cover.path)
         instance.delete()
+
+
+def auth(request):
+    return render(request, "oauth/github_login.html")

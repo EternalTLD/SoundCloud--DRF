@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     # External Packages
     'rest_framework',
     'drf_yasg',
+    'social_django',
     # Internal Apps
     'src.oauth',
     'src.audio_library',
@@ -50,6 +51,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -107,11 +111,18 @@ ALGORITHM = 'HS256'
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ('src.oauth.services.auth_backend.AuthBackend',),
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny'
+        'rest_framework.permissions.AllowAny',
     ]
 }
+
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GITHUB_KEY = "e7cfef8e0db6bf0d7942"
+SOCIAL_AUTH_GITHUB_SECRET = "0ff2f418d2662fe7324dde96e5d938f400cde5ec"
 
 
 SWAGGER_SETTINGS = {
