@@ -6,7 +6,7 @@ from . import models
 class GenreField(serializers.RelatedField):
     def to_representation(self, value):
         return value.title
-    
+
     def to_internal_value(self, data):
         if isinstance(data, list):
             genre_ids = []
@@ -15,7 +15,9 @@ class GenreField(serializers.RelatedField):
                     genre = models.Genre.objects.get(title=genre_title)
                     genre_ids.append(genre.id)
                 except models.Genre.DoesNotExist:
-                    raise serializers.ValidationError(f"Genre {genre_title} doesn't exists")
+                    raise serializers.ValidationError(
+                        f"Genre {genre_title} doesn't exists"
+                    )
             return genre_ids
         else:
             try:
@@ -23,4 +25,3 @@ class GenreField(serializers.RelatedField):
                 return genre.id
             except models.Genre.DoesNotExist:
                 raise serializers.ValidationError(f"Genre {genre_title} doesn't exists")
-                
