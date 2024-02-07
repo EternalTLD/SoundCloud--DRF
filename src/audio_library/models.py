@@ -10,15 +10,6 @@ from ..base.services import (
 )
 
 
-class License(models.Model):
-    """Audio license model"""
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="licenses"
-    )
-    text = models.TextField(max_length=1000)
-
-
 class Genre(models.Model):
     """Genre model"""
 
@@ -48,11 +39,17 @@ class Album(models.Model):
             validate_image_size,
         ],
     )
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="album_likes")
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="album_likes", blank=True
+    )
 
     @property
-    def total_audios(self):
+    def count_audios(self):
         return Audio.objects.filter(album=self).count()
+
+    @property
+    def count_likes(self):
+        return self.likes.count()
 
     def __str__(self) -> str:
         return f"{self.user} - {self.title}"
@@ -68,9 +65,6 @@ class Audio(models.Model):
     album = models.ForeignKey(
         Album, on_delete=models.CASCADE, related_name="audios", null=True, blank=True
     )
-    license = models.ForeignKey(
-        License, on_delete=models.PROTECT, related_name="audio_license"
-    )
     release_date = models.DateTimeField(auto_now_add=True)
     genre = models.ManyToManyField(Genre, related_name="audio_genres")
     file = models.FileField(
@@ -81,7 +75,14 @@ class Audio(models.Model):
     )
     plays_count = models.PositiveIntegerField(default=0)
     downloads = models.PositiveIntegerField(default=0)
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="audio_likes")
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="audio_likes", blank=True
+    )
+    private = models.BooleanField(default=False)
+
+    @property
+    def count_likes(self):
+        return self.likes.count()
 
     def __str__(self) -> str:
         return f"{self.user} - {self.title}"
@@ -98,6 +99,13 @@ class Comment(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
     )
     timestamp = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="comment_likes", blank=True
+    )
+
+    @property
+    def count_likes(self):
+        return self.likes.count()
 
     def __str__(self) -> str:
         return super().__str__()
