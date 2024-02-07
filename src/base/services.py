@@ -39,8 +39,10 @@ def get_upload_playlist_cover_path(instance, file):
 def validate_image_size(file_object):
     """File size validator"""
     if file_object.size > settings.PROFILE_IMAGE_SIZE_MB_LIMIT * 1024 * 1024:
-        raise ValidationError(f"Max size of image is {settings.PROFILE_IMAGE_SIZE_MB_LIMIT} MB")
-    
+        raise ValidationError(
+            f"Max size of image is {settings.PROFILE_IMAGE_SIZE_MB_LIMIT} MB"
+        )
+
 
 def delete_old_file(file_path):
     """Remove path if exist"""
