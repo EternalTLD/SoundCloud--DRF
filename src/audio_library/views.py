@@ -1,44 +1,31 @@
 import os
 
-from django.http import FileResponse, Http404
-from rest_framework import generics, viewsets, parsers, views
-from django.shortcuts import get_object_or_404
+from django.http import FileResponse
+from rest_framework import generics, viewsets, parsers, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
-from . import models, serializers
-from ..base.permissions import IsAuthor
+from ..base.permissions import IsAuthorOrReadOnly
 from ..base.services import delete_old_file
-from ..base.classes import MixedSerializer, Pagination
+from ..base.classes import MixedSerializer
+from . import models, serializers
+from .mixins import LikeActionMixin
 
 
-class GenreListView(generics.ListAPIView):
+class GenreListAPIView(generics.ListAPIView):
     """Genre list view"""
 
     queryset = models.Genre.objects.all()
     serializer_class = serializers.GenreSerializer
 
 
-class LicenseView(viewsets.ModelViewSet):
-    """CRUD license"""
-
-    serializer_class = serializers.LicenseSerializer
-    permission_classes = [IsAuthor]
-
-    def get_queryset(self):
-        return models.License.objects.filter(user=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class AlbumView(viewsets.ModelViewSet):
+class AlbumViewSet(LikeActionMixin, viewsets.ModelViewSet):
     """CRUD album"""
 
+    queryset = models.Album.objects.filter(private=False)
     parser_classes = (parsers.MultiPartParser,)
     serializer_class = serializers.AlbumSerializer
-    permission_classes = [IsAuthor]
-
-    def get_queryset(self):
-        return models.Album.objects.all()
+    permission_classes = [IsAuthorOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -47,28 +34,25 @@ class AlbumView(viewsets.ModelViewSet):
         delete_old_file(instance.cover.path)
         instance.delete()
 
-
-class PublicAlbumListView(generics.ListAPIView):
-    """List of all public albums"""
-
-    serializer_class = serializers.AlbumSerializer
-
-    def get_queryset(self):
-        return models.Album.objects.filter(
-            user__id=self.kwargs.get("pk"), private=False
-        )
+    @action(detail=True, methods=["get"], serializer_class=serializers.AudioSerializer)
+    def audios(self, request, pk):
+        album = self.get_object()
+        audios = models.Audio.objects.filter(album=album)
+        serializer = self.get_serializer(audios, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class AudioView(MixedSerializer, viewsets.ModelViewSet):
+class AudioViewSet(LikeActionMixin, MixedSerializer, viewsets.ModelViewSet):
     """CRUD audio"""
 
-    serializer_class = serializers.CreateAudioSerializer
+    queryset = models.Audio.objects.filter(private=False)
+    serializer_class = serializers.AudioSerializer
     parser_classes = (parsers.MultiPartParser,)
-    permission_classes = [IsAuthor]
-    serializer_classes_by_action = {"list": serializers.AudioSerializer}
-
-    def get_queryset(self):
-        return self.request.user.audios.all()
+    permission_classes = [IsAuthorOrReadOnly]
+    serializer_classes_by_action = {
+        "list": serializers.AudioWithAlbumSerializer,
+        "retrieve": serializers.AudioWithAlbumSerializer,
+    }
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -77,65 +61,64 @@ class AudioView(MixedSerializer, viewsets.ModelViewSet):
         delete_old_file(instance.file.path)
         instance.delete()
 
+    @action(
+        detail=True, methods=["get"], serializer_class=serializers.CommentSerializer
+    )
+    def comments(self, request, pk):
+        audio = self.get_object()
+        comments = models.Comment.objects.filter(audio=audio)
+        serializer = self.get_serializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-class AuthorAudioView(generics.ListAPIView):
-    """Author audio list"""
+    @action(
+        detail=True, methods=["post"], serializer_class=serializers.CommentSerializer
+    )
+    def add_comment(self, request, pk):
+        audio = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(audio=audio, user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer_class = serializers.AudioSerializer
-    pagination_class = Pagination
-
-    def get_queryset(self):
-        return models.Audio.objects.filter(user__id=self.kwargs.get("pk"))
-
-
-class AllAudioView(generics.ListAPIView):
-    """All audio list"""
-
-    queryset = models.Audio.objects.all()
-    serializer_class = serializers.AudioSerializer
-    pagination_class = Pagination
-
-
-class StreamAudioView(views.APIView):
-    """Listen audio view"""
-
-    def get(self, request, pk):
-        audio = get_object_or_404(models.Audio, id=pk)
-        if os.path.exists(audio.file.path):
-            audio.plays_count += 1
-            audio.save()
-            return FileResponse(open(audio.file.path, "rb"), filename=audio.file.name)
-        else:
-            return Http404()
-
-
-class DownloadAudioView(views.APIView):
-    """Download audio view"""
-
-    def get(self, request, pk):
-        audio = get_object_or_404(models.Audio, id=pk)
-        if os.path.exists(audio.file.path):
-            audio.downloads += 1
-            audio.save()
-            return FileResponse(
-                open(audio.file.path, "rb"),
-                filename=audio.file.name,
-                as_attachment=True,
+    @action(detail=True, methods=["get"])
+    def play(self, request, pk):
+        audio = self.get_object()
+        if not os.path.exists(audio.file.path):
+            return Response(
+                {"error": "File doesn't exists"}, status=status.HTTP_404_NOT_FOUND
             )
-        else:
-            return Http404()
+        audio.plays_count += 1
+        audio.save()
+        return FileResponse(open(audio.file.path, "rb"), filename=audio.file.name)
+
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk):
+        audio = self.get_object()
+        if not os.path.exists(audio.file.path):
+            return Response(
+                {"error": "File doesn't exists"}, status=status.HTTP_404_NOT_FOUND
+            )
+        audio.downloads += 1
+        audio.save()
+        return FileResponse(
+            open(audio.file.path, "rb"),
+            filename=audio.file.name,
+            as_attachment=True,
+        )
 
 
-class PlaylistView(MixedSerializer, viewsets.ModelViewSet):
+class PlaylistViewSet(MixedSerializer, viewsets.ModelViewSet):
     """CRUD playlist"""
 
-    serializer_class = serializers.CreateAudioSerializer
+    queryset = models.Playlist.objects.all()
+    serializer_class = serializers.PlaylistSerializer
     parser_classes = (parsers.MultiPartParser,)
-    permission_classes = [IsAuthor]
-    serializer_classes_by_action = {"list": serializers.PlaylistSerializer}
-
-    def get_queryset(self):
-        return self.request.user.playlists.all()
+    permission_classes = [IsAuthorOrReadOnly]
+    serializer_classes_by_action = {
+        "list": serializers.PlaylistWithAudiosSerializer,
+        "retrieve": serializers.PlaylistWithAudiosSerializer,
+    }
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -143,3 +126,11 @@ class PlaylistView(MixedSerializer, viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         delete_old_file(instance.cover.path)
         instance.delete()
+
+
+class CommentViewSet(LikeActionMixin, viewsets.ModelViewSet):
+    """CRUD comments"""
+
+    queryset = models.Comment.objects.all()
+    serializer_class = serializers.CommentSerializer
+    permission_classes = [IsAuthorOrReadOnly]
