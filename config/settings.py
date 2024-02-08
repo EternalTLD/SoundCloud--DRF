@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     # Internal Apps
     "src.audio_library",
+    "src.users",
 ]
 
 MIDDLEWARE = [
