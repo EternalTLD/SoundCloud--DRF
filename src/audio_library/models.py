@@ -3,11 +3,11 @@ from django.core.validators import FileExtensionValidator
 from django.conf import settings
 
 from ..base.services import (
-    validate_image_size,
     get_upload_album_cover_path,
     get_upload_audio_path,
     get_upload_playlist_cover_path,
 )
+from ..base.validators import validate_image_size
 
 
 class Genre(models.Model):
