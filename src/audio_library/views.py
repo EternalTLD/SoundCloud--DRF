@@ -31,7 +31,8 @@ class AlbumViewSet(LikeActionMixin, viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def perform_destroy(self, instance):
-        delete_old_file(instance.cover.path)
+        if instance.cover:
+            delete_old_file(instance.cover.path)
         instance.delete()
 
     @action(detail=True, methods=["get"], serializer_class=serializers.AudioSerializer)
@@ -56,10 +57,6 @@ class AudioViewSet(LikeActionMixin, MixedSerializer, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    def perform_destroy(self, instance):
-        delete_old_file(instance.file.path)
-        instance.delete()
 
     @action(
         detail=True, methods=["get"], serializer_class=serializers.CommentSerializer
@@ -124,7 +121,8 @@ class PlaylistViewSet(MixedSerializer, viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def perform_destroy(self, instance):
-        delete_old_file(instance.cover.path)
+        if instance.cover:
+            delete_old_file(instance.cover.path)
         instance.delete()
 
 

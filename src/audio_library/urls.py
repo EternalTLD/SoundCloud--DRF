@@ -14,6 +14,6 @@ router.register(r"playlist", views.PlaylistViewSet)
 router.register(r"comment", views.CommentViewSet)
 
 urlpatterns = [
-    path("genre/", views.GenreListAPIView.as_view()),
+    path("genre/", views.GenreListAPIView.as_view(), name="genre-list"),
     path("", include(router.urls)),
 ]

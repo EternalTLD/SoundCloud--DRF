@@ -129,5 +129,9 @@ class Playlist(models.Model):
         ],
     )
 
+    @property
+    def count_audios(self):
+        return self.audios.count()
+
     def __str__(self) -> str:
         return f"Playlist - {self.title}"

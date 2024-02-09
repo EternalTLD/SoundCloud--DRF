@@ -29,7 +29,8 @@ class AlbumSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        delete_old_file(instance.cover.path)
+        if instance.cover:
+            delete_old_file(instance.cover.path)
         return super().update(instance, validated_data)
 
 
@@ -52,10 +53,6 @@ class AudioSerializer(serializers.ModelSerializer):
             "downloads",
         )
 
-    def update(self, instance, validated_data):
-        delete_old_file(instance.file.path)
-        return super().update(instance, validated_data)
-
 
 class AudioWithAlbumSerializer(AudioSerializer):
     album = AlbumSerializer()
@@ -67,7 +64,8 @@ class PlaylistSerializer(serializers.ModelSerializer):
         fields = ("id", "title", "user", "audios", "cover")
 
     def update(self, instance, validated_data):
-        delete_old_file(instance.cover.path)
+        if instance.cover:
+            delete_old_file(instance.cover.path)
         return super().update(instance, validated_data)
 
 
