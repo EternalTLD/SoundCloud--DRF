@@ -76,4 +76,4 @@ class PlaylistWithAudiosSerializer(PlaylistSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Comment
-        fields = ("id", "user", "text", "timestamp")
+        fields = ("id", "user", "text", "timestamp", "audio")
